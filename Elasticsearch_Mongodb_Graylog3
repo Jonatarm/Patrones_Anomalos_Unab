@@ -1,0 +1,214 @@
+###Graylog is an open-source log management tool that helps you to collect, index and analyze any machine logs centrally. This guide focuses on installing Graylog on Ubuntu 18.04 / Ubuntu 16.04.
+###Components
+
+###MongoDB – Acts as a database, stores the configurations and meta information.
+
+###Elasticsearch – It stores the log messages and offers a searching facility. It is recommended to allocate more memory and use SAS or SAN disks for Elasticsearch nodes. Here, where all your searching happens.
+
+###Graylog Server – Log Parser. It collects the logs from various inputs and provides output to a built-in web interface for managing the logs.
+###Prerequisites
+
+###As you know, Elasticsearch is a java based application. Install either OpenJDK or Oracle JDK on your machine to proceed further.
+
+
+###I will go for OpenJDK 8.
+# sudo apt update
+# sudo apt install -y apt-transport-https openjdk-8-jre-headless uuid-runtime pwgen curl dirmngr
+
+###Verify the Java version.
+# java -version
+
+###Output:
+##openjdk version "1.8.0_191"
+##OpenJDK Runtime Environment (build 1.8.0_191-8u191-b12-2ubuntu0.18.04.1-b12)
+##OpenJDK 64-Bit Server VM (build 25.191-b12, mixed mode)
+
+
+
+###Install Elasticsearch
+
+###Elasticsearch is one of the main components which requires Graylog to run, acts as a search server, offers a real-time distributed search and analytics with the RESTful web interface.
+###Elasticsearch stores all the logs sent by the Graylog server and displays the messages whenever user request over the built-in web interface.
+
+###Download and install the GPG signing key.
+# wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+
+###Set up Elasticsearch repository by running below command.
+# echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
+
+###Update the repository cache and install Elasticsearch package.
+# sudo apt update
+# sudo apt install -y elasticsearch
+
+###Make Elasticsearch service to start automatically on the system startup.
+# sudo systemctl enable elasticsearch
+
+###The only important thing is to set a cluster name as graylog. Edit the configuration file of Elasticsearch and update it accordingly.
+# sudo nano /etc/elasticsearch/elasticsearch.yml
+
+###Set the cluster name shown like below.
+##cluster.name: graylog
+
+###Start the Elasticsearch service to read the new configurations.
+# sudo systemctl restart elasticsearch
+
+###Wait at least a minute to let the Elasticsearch get fully restarted. Elastisearch should be now listening on 9200 for the processing HTTP request. Use a CURL to check the response.
+# curl -X GET http://localhost:9200
+
+###Output:
+###Ensure that cluster name shows as graylog.
+{
+  "name" : "bgVbYrc",
+  "cluster_name" : "graylog",
+  "cluster_uuid" : "-wECQlwnSZWftd_XdWSz-g",
+  "version" : {
+    "number" : "6.6.1",
+    "build_flavor" : "default",
+    "build_type" : "deb",
+    "build_hash" : "1fd8f69",
+    "build_date" : "2019-02-13T17:10:04.160291Z",
+    "build_snapshot" : false,
+    "lucene_version" : "7.6.0",
+    "minimum_wire_compatibility_version" : "5.6.0",
+    "minimum_index_compatibility_version" : "5.0.0"
+  },
+  "tagline" : "You Know, for Search"
+}
+
+###Optional: Test the health of Elasticsearch cluster.
+# curl -XGET 'http://localhost:9200/_cluster/health?pretty=true'
+
+###Output:
+###Make sure the output yields the cluster status as green.
+{
+  "cluster_name" : "graylog",
+  "status" : "green",
+  "timed_out" : false,
+  "number_of_nodes" : 1,
+  "number_of_data_nodes" : 1,
+  "active_primary_shards" : 0,
+  "active_shards" : 0,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 0,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 100.0
+}
+
+
+
+###Install MongoDB
+
+###Download and install the latest version of MongoDB from the official website. Import the public key on the terminal to begin.
+# sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+
+###Add mongodb repository by creating the /etc/apt/sources.list.d/mongodb-org.list file using the following command.
+
+### Ubuntu 18.04 ###
+echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+
+### Ubuntu 16.04 ###
+# echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+
+### Install MongoDB using the following command.
+# sudo apt update
+# sudo apt install -y mongodb-org
+
+###Start the MongoDB and enable it on the system start-up.
+# sudo systemctl start mongod
+# sudo systemctl enable mongod
+
+
+
+###Install Graylog
+
+###Graylog Server accepts and processes the log messages and then displays it for the requests that come from the graylog web interface.
+
+###Download and Install graylog 3.x repository.
+# wget https://packages.graylog2.org/repo/packages/graylog-3.0-repository_latest.deb
+# sudo dpkg -i graylog-3.0-repository_latest.deb
+
+###Update the repository cache.
+# sudo apt update
+
+###Install the Graylog server using the following command.
+# sudo apt install -y graylog-server
+
+###Configure Graylog
+###You must set a secret to secure the user passwords. Use the pwgen command to the same.
+# pwgen -N 1 -s 96
+
+##Output:
+##fGoTI07CooB6xNy5sdPVSKSuq6QSu2QyWf6G9z3haolgwbERTQ9ZbfbF6hxRYbJMMAlEZX7CXHxJLBkNyfM0420u8aFuZy9M
+
+###Edit the server.conf file to begin the graylog configuration.
+# sudo nano /etc/graylog/server/server.conf
+
+###Place the secret like below.
+##password_secret = fGoTI07CooB6xNy5sdPVSKSuq6QSu2QyWf6G9z3haolgwbERTQ9ZbfbF6hxRYbJMMAlEZX7CXHxJLBkNyfM0420u8aFuZy9M
+
+###Next is to set a hash (sha256) password for the root user (not to be confused with the system user, the root user of graylog is admin).
+###You will need this password to login into the Graylog web interface. Admin’s password can’t be changed using the web interface. So, you must edit this variable to set.
+
+###Replace yourpassword with the choice of yours.
+# echo -n yourpassword | sha256sum
+
+##Output:
+##e3c652f0ba0b4801205814f8b6bc49672c4c74e25b497770bb89b22cdeb4e951
+
+###Edit the server.conf file again.
+# sudo nano /etc/graylog/server/server.conf
+
+###Place the hash password.
+##root_password_sha2 = e3c652f0ba0b4801205814f8b6bc49672c4c74e25b497770bb89b22cdeb4e951
+
+###You can set up email address admin user.
+##root_email = "itzgeek.web@gmail.com"
+
+###Set timezone of root (admin) user.
+##root_timezone = UTC
+
+###Set only one master node by defining the below variable. If you add a second Graylog node, set this to false to make the second node as a slave as the Master node does some periodic tasks that slave nodes won’t perform.
+##is_master = true
+
+###Set the number of log messages to keep per index; it is recommended to have several smaller indices instead of larger ones.
+##elasticsearch_max_docs_per_index = 20000000
+
+###The following parameter defines to have a total number of indices if this number is reached old index will be deleted.
+##elasticsearch_max_number_of_indices = 20
+
+###Shards setting rely on the number of nodes in the particular Elasticsearch cluster. If you have only one node, set it as 1.
+##elasticsearch_shards = 1
+
+###This setting defines the number of replicas for your indices. If you have only one node in the Elasticsearch cluster, then set it as 0.
+##elasticsearch_replicas = 0
+
+###Setup Graylog web interface
+###From the version 2.x, the web interface is being served directly by the Graylog server. Configure the Graylog web interface by editing the server.conf file.
+# sudo nano /etc/graylog/server/server.conf
+
+###Update the below entry with your system ip address from which you will access the Graylog web interface.
+##http_bind_address = your-server-ip:9000
+
+###Restart Graylog service.
+# sudo systemctl restart graylog-server
+
+###Make Graylog server to start automatically on system startup.
+# sudo systemctl enable graylog-server
+
+###You can check out the server startup logs, and it will be useful for you to troubleshoot Graylog in case of an issue.
+# sudo tail -f /var/log/graylog-server/server.log
+
+###On the successful start of graylog-server, you should get the following message in the log file.
+##2019-02-22T10:07:49.398+05:30 INFO  [ServerBootstrap] Graylog server up and running.
+
+
+###Access Graylog
+
+###The web interface will now be listening on port 9000, point your browser to http://ip.add.re.ss:9000
+###Login with username admin and the password you configured at root_password_sha2 on server.conf.
+
+###Once you logged in, you would see the getting started page.
