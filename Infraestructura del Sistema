@@ -1,0 +1,30 @@
+La infraestructura que se presenta y con la  cual se detectarán ataques informáticos dentro de una red, esta compuesta por:
+
+1.	Correlacionador de eventos Open Source (Graylog).
+2.	Cortafuegos Open Source (pfSense).
+3.	Servidor de correo Open Source (Postfix - Dovecot).
+4.	Servidor DNS (Bind).
+5.	Herramienta generadora de ataques.
+6.	Modulo de Detección y Categorización de ataques.
+
+Los diferentes componentes del sistema seran los encargados de Detectar, mitigar e informar al correlacionador de eventos de lo que esta sucediendo dentro de la red.
+
+1.	Correlacionador de eventos Open Source (Graylog).
+    Es el encargado de correlacionador toda la informacion de los distintos dispositivos, sean estas alertas informativas, de seguridad, de cumplimiento, etc.
+    Posterior a esto es el encargado de mostrar en forma grafica al encargado lo que esta sucediendo, objeto se tomen medidas al respecto, enviar correos informativos, etc.
+    
+2.	Cortafuegos Open Source (pfSense).
+    Es el encargado de gestionar toda la red del laboratorio, a traves del el se realizan las configuraciones de Nateo, Permisos, Reglas, Bloqueos, Enrutamientos, etc.
+    A su vez enviara logs a Graylog con lo detectado en la red.
+    
+3.	Servidor de correo Open Source (Postfix - Dovecot).
+    Es el que brindara un servicio de correo interno con su respectivo dominio, objeto se tenga un servicio de correo mas controlado (Confidencialidad).
+    
+4.	Servidor DNS (Bind).
+    Sera en el encargado de brindar los servicios de DNS para el sistema propuesto.
+    
+5.	Herramienta generadora de ataques (Solo uso en Laboratorio).
+    Generara ataques sobre la red, objeto ver si el sistema esta operando de manera correcta (Solo se debe usar para testear el sistema).
+    
+6.	Modulo de Detección y Categorización de ataques.
+    Este modulo es el encargado de categorizar los diferentes ataques informatico que se sucedan en la red e informar su categorizacion a Graylog
