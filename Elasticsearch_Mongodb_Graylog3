@@ -211,4 +211,5 @@ echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/
 ###The web interface will now be listening on port 9000, point your browser to http://ip.add.re.ss:9000
 ###Login with username admin and the password you configured at root_password_sha2 on server.conf.
 
-###Once you logged in, you would see the getting started page.
+
+A contar de este momento usted se encuentra dentro de Graylog!!!
